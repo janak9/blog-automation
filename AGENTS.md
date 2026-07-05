@@ -1,12 +1,26 @@
-# OpenSwarm — Customization Guide
+# Vtryon SEO Blog Swarm — Customization Guide
 
 This file gives coding agents (Cursor, Claude Code, Codex, etc.) everything they need to understand and customize this swarm. Read it before making any changes.
 
 ---
 
-## What is OpenSwarm?
+## What is this swarm?
 
-OpenSwarm is a multi-agent AI team you can fork and reshape into any kind of swarm you need — SEO, sales, research, finance, customer support, or anything else. Each agent is a specialist. They collaborate through a shared orchestrator.
+This is an **SEO blog automation swarm** (forked from OpenSwarm) that writes, illustrates, approves,
+and deploys blog posts for **https://vtryon.legresca.ai/blog** — Vtryon's AI virtual try-on / AI
+fashion imagery product (garment sellers, boutiques, strong India / ethnic-wear focus).
+
+**Pipeline:** SEO Research → Blog Writer → Blog Image Agent → **SEO Director review + user approval**
+→ Blog Deploy Agent opens a **pull request** to the site repo with the post + full **Hindi and
+Gujarati** translations for i18n.
+
+- **Site repo (deploy target):** `/Users/janakvaghela/projects/legresca/v-try-on` (Next.js + next-intl)
+- **A post touches 4 files:** `lib/blog-data.ts` (English `BLOG_POSTS`), `messages/en.json` (metadata),
+  `messages/hi.json` + `messages/gu.json` (full translated `content[]` + `faqs[]`). See the Blog Deploy
+  Agent's `instructions.md` for the exact contract.
+
+The base framework is still OpenSwarm — a multi-agent team you can fork and reshape. Each agent is a
+specialist; they collaborate through the SEO Director.
 
 ---
 
@@ -95,18 +109,24 @@ The coding agent will read this file, understand the structure, and make the rig
 
 ---
 
-## Current Agents
+## Current Agents (SEO Blog Swarm)
 
-| Agent | Purpose |
-|---|---|
-| `orchestrator` | Routes tasks to the right specialist |
-| `virtual_assistant` | Email, calendar, Slack, file management |
-| `deep_research` | Web research and synthesis |
-| `data_analyst_agent` | Data analysis, visualization, statistical modeling |
-| `docs_agent` | Document creation and editing |
-| `slides_agent` | PowerPoint / HTML slide generation |
-| `image_generation_agent` | AI image generation and editing |
-| `video_generation_agent` | AI video generation and editing |
+The swarm is wired in `swarm.py`. Folder names are kept from the OpenSwarm base to avoid breaking
+packaging, but each has been repurposed — the **agent name** is what matters at runtime.
+
+| Folder | Agent name | Purpose |
+|---|---|---|
+| `orchestrator` | **SEO Director** | Plans the pipeline, reviews drafts, owns the human approval gate, dispatches deployment |
+| `deep_research` | **SEO Research Agent** | Keyword/topic research, SERP analysis, content briefs |
+| `docs_agent` | **Blog Writer** | Writes posts as a ready-to-deploy `BLOG_POSTS` object |
+| `image_generation_agent` | **Blog Image Agent** | Featured + inline blog imagery (`<name>_thumb.webp`) |
+| `blog_deploy_agent` | **Blog Deploy Agent** | Pulls v-try-on repo, wires post + hi/gu i18n, opens PR to `main` |
+
+### Dormant folders (not wired into the SEO swarm)
+
+`virtual_assistant`, `data_analyst_agent`, `slides_agent`, `video_generation_agent` remain on disk
+(so `package.json` packaging and `slides_preview_server.py` don't break) but are **not** included in
+`swarm.py`. Delete them if you want a leaner fork, and remove their entries from `package.json`.
 
 ---
 

@@ -1,0 +1,14 @@
+{
+  "_README": "Cost rates for the SEO swarm's usage report. EDIT THESE with your real provider prices. Text rates are USD per 1,000,000 tokens; image rates are USD per generated image. Model keys match by exact id first, then by prefix (e.g. 'gpt-5.4' matches 'gpt-5.4-2026-03-05'), then 'default'.",
+  "rates_are_examples": false,
+  "text_per_1m_tokens": {
+    "gpt-5.4":  { "input": 2.50, "cached_input": 0.25, "output": 15.00 },
+    "default":  { "input": 2.50, "cached_input": 0.25, "output": 15.00 }
+  },
+  "image_per_image": {
+    "gemini-2.5-flash-image":     { "per_image": 0.039 },
+    "gemini-3-pro-image":         { "per_image": 0.134 },
+    "gpt-image-1.5":              { "per_image": 0.170 },
+    "default":                    { "per_image": 0.040 }
+  }
+}

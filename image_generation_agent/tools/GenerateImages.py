@@ -18,6 +18,7 @@ from .utils.image_io import (
     image_to_base64_jpeg,
     build_multimodal_outputs,
     extract_gemini_image_and_usage,
+    gemini_no_image_reason,
     extract_openai_images_and_usage,
     run_parallel_variants_sync,
     validate_aspect_ratio_for_model,
@@ -109,7 +110,9 @@ class GenerateImages(BaseTool):
             )
             image, usage = extract_gemini_image_and_usage(response)
             if image is None:
-                return None
+                # Surface why (safety block, refusal, finish_reason) instead of a
+                # silent None that becomes a generic "no images returned" message.
+                raise RuntimeError(gemini_no_image_reason(response))
 
             variant_name = build_variant_output_name(self.file_name, idx, self.num_variants)
             image_name, file_path = save_image(image, variant_name, images_dir)

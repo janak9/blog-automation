@@ -243,6 +243,34 @@ def extract_gemini_image_and_usage(response: Any) -> tuple[Image.Image | None, d
     return None, usage
 
 
+def gemini_no_image_reason(response: Any) -> str:
+    """Build a human-readable reason a Gemini call returned no image.
+
+    Surfaces finish_reason, any text/refusal the model returned, and prompt
+    feedback (safety blocks) so failures are diagnosable instead of opaque.
+    """
+    details: list[str] = []
+    feedback = getattr(response, "prompt_feedback", None)
+    if feedback is not None:
+        block_reason = getattr(feedback, "block_reason", None)
+        if block_reason:
+            details.append(f"prompt blocked: {block_reason}")
+
+    for candidate in getattr(response, "candidates", None) or []:
+        finish = getattr(candidate, "finish_reason", None)
+        if finish:
+            details.append(f"finish_reason={finish}")
+        parts = getattr(getattr(candidate, "content", None), "parts", None) or []
+        for part in parts:
+            text = getattr(part, "text", None)
+            if text:
+                details.append(f"model text: {text.strip()[:300]}")
+
+    if not details:
+        details.append("Gemini returned a response with no image and no diagnostic detail.")
+    return "Gemini returned no image (" + "; ".join(details) + ")"
+
+
 def extract_openai_images_and_usage(response: Any) -> tuple[list[Image.Image], dict]:
     usage = getattr(response, "usage", {}) or {}
     if usage and not isinstance(usage, dict):
@@ -269,6 +297,7 @@ def extract_openai_images_and_usage(response: Any) -> tuple[list[Image.Image], d
 
 def run_parallel_variants_sync(task_fn, num_variants: int) -> list:
     results_by_index: dict[int, Any] = {}
+    errors: list[str] = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_variants) as executor:
         future_to_index = {
             executor.submit(task_fn, idx): idx
@@ -280,10 +309,20 @@ def run_parallel_variants_sync(task_fn, num_variants: int) -> list:
                 result = future.result()
                 if result is not None:
                     results_by_index[idx] = result
-            except Exception:
-                pass
+            except Exception as exc:  # noqa: BLE001 — surface the real cause below
+                errors.append(f"{type(exc).__name__}: {exc}")
 
-    return [results_by_index[idx] for idx in sorted(results_by_index.keys())]
+    results = [results_by_index[idx] for idx in sorted(results_by_index.keys())]
+
+    # If every variant failed, don't hide the root cause behind a generic
+    # "no images returned" message — re-raise the actual provider error so the
+    # agent (and the user) can see what went wrong (bad API key, safety block,
+    # unavailable model, quota, etc.).
+    if not results and errors:
+        unique = list(dict.fromkeys(errors))
+        raise RuntimeError("All image variants failed:\n- " + "\n- ".join(unique))
+
+    return results
 
 
 def validate_aspect_ratio_for_model(model: str, aspect_ratio: str) -> None:

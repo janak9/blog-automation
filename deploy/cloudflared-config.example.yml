@@ -1,0 +1,23 @@
+# Named Cloudflare tunnel for the SEO Blog Swarm MCP bridge.
+# Copy to ~/.cloudflared/config.yml and fill in your tunnel ID + hostname.
+#
+# Prereqs (run once, interactive):
+#   cloudflared tunnel login                       # browser: authorize your domain
+#   cloudflared tunnel create vtryon-swarm         # prints a Tunnel ID + creds json
+#   cloudflared tunnel route dns vtryon-swarm swarm.yourdomain.com
+#
+# Then run it (leave running while you use mobile control):
+#   cloudflared tunnel run vtryon-swarm
+#
+# Your Claude connector URL becomes:  https://swarm.yourdomain.com/mcp
+# And in .env set:                     PUBLIC_BASE_URL=https://swarm.yourdomain.com
+
+tunnel: <YOUR_TUNNEL_ID>
+credentials-file: /Users/janakvaghela/.cloudflared/<YOUR_TUNNEL_ID>.json
+
+ingress:
+  # The MCP bridge (mcp_bridge.py) listens here.
+  - hostname: swarm.yourdomain.com
+    service: http://localhost:9000
+  # Everything else -> 404
+  - service: http_status:404

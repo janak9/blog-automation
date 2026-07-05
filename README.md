@@ -61,7 +61,7 @@ Connect to 10,000+ external services (Gmail, Slack, GitHub, HubSpot) via Composi
 ## 📦 Get Started in 30 Seconds
 
 ```bash
-npx @vrsen/openswarm
+npx --yes @vrsen/openswarm@latest
 ```
 
 That's it! The setup wizard handles everything: authentication, dependencies, and configuration.

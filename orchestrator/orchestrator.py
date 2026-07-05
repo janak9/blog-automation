@@ -9,10 +9,12 @@ _load_openswarm_dotenv()
 
 def create_orchestrator() -> Agent:
     return Agent(
-        name="Orchestrator",
+        name="SEO Director",
         description=(
-            "Primary coordinator that plans multi-agent workflows, runs independent workstreams in parallel, "
-            "and hands off to a specialist when tight user iteration is needed."
+            "SEO Director and entry point for the Vtryon blog swarm. Plans the content pipeline "
+            "(research -> write -> images), reviews drafts, acts as the human-in-the-loop approval "
+            "gate, and only after approval dispatches the Blog Deploy Agent to publish the post with "
+            "Hindi/Gujarati i18n via a PR."
         ),
         instructions="./instructions.md",
         model=get_default_model(),
@@ -20,10 +22,10 @@ def create_orchestrator() -> Agent:
             reasoning=Reasoning(effort="medium", summary="auto") if is_openai_provider() else None,
         ),
         conversation_starters=[
-            "What can this agency do?",
-            "Build a full launch package: research, slides, docs, and creative assets.",
-            "Analyze my data and then turn insights into a polished executive deck.",
-            "Coordinate a workflow for proposal doc + promo visuals + short product video.",
+            "Plan and write a new SEO blog post for saree sellers, then show it to me for approval.",
+            "Research topics for the Vtryon blog and recommend the best one to write next.",
+            "Draft a blog on reducing clothing returns with AI virtual try-on for my review.",
+            "The last draft is approved — deploy it to the v-try-on repo with hi/gu translations.",
         ],
     )
 

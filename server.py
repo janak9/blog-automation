@@ -1,10 +1,17 @@
 # FastAPI entry point — run with: python server.py
 
 import logging
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 from run_utils import _load_openswarm_dotenv
 
+# Load the OpenSwarm state-root .env (official launcher path) AND the project-local
+# .env. When running `python server.py` directly the state-root file usually does not
+# exist, so the project .env is what supplies API keys and APP_TOKEN.
 _load_openswarm_dotenv()
+load_dotenv(Path(__file__).with_name(".env"))
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

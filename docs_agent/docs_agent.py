@@ -11,32 +11,23 @@ from config import get_default_model, is_openai_provider
 _INSTRUCTIONS_PATH = Path(__file__).parent / "instructions.md"
 
 
-def _list_existing_projects() -> str:
-    from .tools.utils.doc_file_utils import get_mnt_dir
-    base = get_mnt_dir()
-    if not base.exists():
-        return "(none)"
-    dirs = sorted(d.name for d in base.iterdir() if d.is_dir())
-    return "\n".join(f"  - {d}" for d in dirs) if dirs else "(none)"
-
-
 def _build_instructions() -> str:
     now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     body = _INSTRUCTIONS_PATH.read_text(encoding="utf-8")
-    projects_block = _list_existing_projects()
-    return (
-        f"{body}\n\n"
-        f"Current date/time (UTC): {now_utc}\n\n"
-        f"Existing project folders (do NOT reuse these names for a new document project):\n{projects_block}"
-    )
+    return f"{body}\n\nCurrent date/time (UTC): {now_utc}\n"
 
 
 def create_docs_agent() -> Agent:
+    """Blog Writer Agent — produces SEO blog posts in the BLOG_POSTS JSON shape."""
     return Agent(
-        name="Docs Agent",
-        description="Professional Document Engineer specializing in creating, editing, and converting files to multiple formats (PDF, Markdown, TXT, DOCX).",
+        name="Blog Writer",
+        description=(
+            "SEO blog writer for the Vtryon fashion / AI virtual try-on blog. Turns a research brief "
+            "into a complete, on-brand article emitted as a ready-to-deploy BLOG_POSTS object "
+            "(slug, title, description, date, readingTime, author, featuredImage, category, "
+            "content[], faq[]) plus image direction for the Blog Image Agent."
+        ),
         instructions=_build_instructions(),
-        files_folder="./files",
         tools_folder="./tools",
         model=get_default_model(),
         model_settings=ModelSettings(
@@ -45,10 +36,10 @@ def create_docs_agent() -> Agent:
         ),
         tools=[WebSearchTool(), IPythonInterpreter, CopyFile],
         conversation_starters=[
-            "Draft Week 34 client status report with a table and export as PDF.",
-            "Create a one-page AI chatbot proposal and export as DOCX.",
-            "Create a product launch executive memo in HTML.",
-            "Write an onboarding SOP for a remote operations coordinator and deliver as Markdown.",
+            "Write a blog post from this SEO brief and emit it as a BLOG_POSTS object.",
+            "Draft a 10-minute guide on AI virtual try-on for saree sellers with FAQs.",
+            "Turn these keywords into an on-brand Vtryon article with headings, lists, and images.",
+            "Write a comparison post on standard vs premium AI image generation for fashion.",
         ],
     )
 

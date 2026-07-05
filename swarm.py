@@ -45,41 +45,41 @@ def create_agency(load_threads_callback=None):
     from agency_swarm import Agency
     from agency_swarm.tools import Handoff, SendMessage
 
+    # SEO Blog Swarm — 5 agents.
+    #   orchestrator            -> SEO Director (coordinator + human-in-the-loop approver)
+    #   deep_research           -> SEO Research & Keyword Agent
+    #   docs_agent              -> Blog Writer Agent (produces BLOG_POSTS JSON)
+    #   image_generation_agent  -> Blog Image Agent (featured / inline imagery)
+    #   blog_deploy_agent       -> Blog Deployment & Localization Agent (git + i18n -> PR)
     from orchestrator import create_orchestrator
-    from virtual_assistant import create_virtual_assistant
     from deep_research import create_deep_research
-    from data_analyst_agent import create_data_analyst
-    from slides_agent import create_slides_agent
     from docs_agent import create_docs_agent
-    from video_generation_agent import create_video_generation_agent
     from image_generation_agent import create_image_generation_agent
+    from blog_deploy_agent import create_blog_deploy_agent
 
-    orchestrator = create_orchestrator()
-    virtual_assistant = create_virtual_assistant()
-    deep_research = create_deep_research()
-    data_analyst = create_data_analyst()
-    slides_agent = create_slides_agent()
-    docs_agent = create_docs_agent()
-    video_generation_agent = create_video_generation_agent()
-    image_generation_agent = create_image_generation_agent()
+    seo_director = create_orchestrator()
+    seo_research = create_deep_research()
+    blog_writer = create_docs_agent()
+    blog_image = create_image_generation_agent()
+    blog_deploy = create_blog_deploy_agent()
 
     all_agents = [
-        orchestrator,
-        virtual_assistant,
-        slides_agent,
-        deep_research,
-        data_analyst,
-        docs_agent,
-        video_generation_agent,
-        image_generation_agent,
+        seo_director,
+        seo_research,
+        blog_writer,
+        blog_image,
+        blog_deploy,
     ]
 
+    # The Director can dispatch to every specialist.
     send_message_flows = [
-        (orchestrator, specialist, SendMessage)
+        (seo_director, specialist, SendMessage)
         for specialist in all_agents
-        if specialist is not orchestrator
+        if specialist is not seo_director
     ]
 
+    # Full handoff mesh so specialists can chain the pipeline
+    # (research -> write -> image -> deploy) without round-tripping the Director.
     handoff_flows = [
         (a > b, Handoff)
         for a in all_agents
@@ -90,7 +90,7 @@ def create_agency(load_threads_callback=None):
     agency = Agency(
         *all_agents,
         communication_flows=send_message_flows + handoff_flows,
-        name="OpenSwarm",
+        name="SEOBlogSwarm",
         shared_instructions="shared_instructions.md",
         load_threads_callback=load_threads_callback,
     )

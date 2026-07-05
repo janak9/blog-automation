@@ -1,27 +1,31 @@
 from agency_swarm import Agent, ModelSettings
 from agency_swarm.tools import WebSearchTool, IPythonInterpreter
 from openai.types.shared import Reasoning
-from virtual_assistant.tools.ScholarSearch import ScholarSearch
 
 from config import get_default_model, is_openai_provider
 
 
 def create_deep_research() -> Agent:
+    """SEO Research & Keyword Agent for the v-try-on blog swarm."""
     return Agent(
-        name="Deep Research Agent",
-        description="Comprehensive deep research agent that conducts thorough research on any topic.",
+        name="SEO Research Agent",
+        description=(
+            "SEO strategist and keyword researcher. Finds high-intent topics, keywords, and SERP gaps "
+            "for the v-try-on fashion / AI virtual try-on audience, analyzes competing content, and "
+            "produces a content brief (target keyword, search intent, outline, entities, internal-link "
+            "and FAQ ideas) that the Blog Writer turns into a post."
+        ),
         instructions="./instructions.md",
-        files_folder="./files",
-        tools=[WebSearchTool(), ScholarSearch, IPythonInterpreter],
+        tools=[WebSearchTool(), IPythonInterpreter],
         model=get_default_model(),
         model_settings=ModelSettings(
-            reasoning=Reasoning(effort="high", summary="auto") if is_openai_provider() else None,
+            reasoning=Reasoning(effort="medium", summary="auto") if is_openai_provider() else None,
             response_include=["web_search_call.action.sources"] if is_openai_provider() else None,
         ),
         conversation_starters=[
-            "Research the latest trends in renewable energy for 2026.",
-            "Give me a comprehensive analysis of the AI agent market landscape.",
-            "Find recent academic papers on large language model reasoning.",
-            "Compare the top 5 project management tools with pros and cons.",
+            "Find 5 high-intent blog topics for saree/kurti sellers considering AI virtual try-on.",
+            "Build an SEO content brief for the keyword 'virtual try-on for ethnic wear'.",
+            "Analyze what competitors rank for around 'reduce clothing returns with AI'.",
+            "Suggest long-tail keywords and FAQs for an AI fashion photoshoot article.",
         ],
     )
