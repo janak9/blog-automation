@@ -10,9 +10,19 @@ This is an **SEO blog automation swarm** (forked from OpenSwarm) that writes, il
 and deploys blog posts for **https://vtryon.legresca.ai/blog** — Vtryon's AI virtual try-on / AI
 fashion imagery product (garment sellers, boutiques, strong India / ethnic-wear focus).
 
-**Pipeline:** SEO Research → Blog Writer → Blog Image Agent → **SEO Director review + user approval**
-→ Blog Deploy Agent opens a **pull request** to the site repo with the post + full **Hindi and
-Gujarati** translations for i18n.
+**Pipeline:** SEO Research (keyword brief **+ best-in-class expert persona & strategy**) → Blog Writer
+(**writes AS that expert**, following a strict quality checklist) → Blog Image Agent → **SEO Director
+review + user approval** → Blog Deploy Agent opens a **pull request** to the site repo with the post +
+full **Hindi and Gujarati** translations for i18n.
+
+**Content-thinking flow (how a post is conceived):**
+1. SEO Research finds the person who writes best on the topic (e.g. Steve Alder for healthcare/PHI),
+   picks the strongest one, and extracts their SEO/writing strategy.
+2. That persona + strategy goes into the brief.
+3. The Blog Writer is told *"write as <Expert>"* and follows the standing quality checklist: ~15-min
+   long-form, heavily SEO-friendly + meta tags, suggested charts/visuals, external links only for
+   real examples/case studies (verified not 404), organic non-AI voice, actionable takeaway, an
+   attractive SEO FAQ, internal blog links, and **no Zappos/Airbnb/Dropbox/Figma** examples.
 
 - **Site repo (deploy target):** `/Users/janakvaghela/projects/legresca/v-try-on` (Next.js + next-intl)
 - **A post touches 4 files:** `lib/blog-data.ts` (English `BLOG_POSTS`), `messages/en.json` (metadata),

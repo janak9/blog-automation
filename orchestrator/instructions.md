@@ -21,11 +21,17 @@ and own the **approval gate**.
 
 1. **Clarify the goal.** If the user's topic is vague, ask one focused question at a time (topic,
    audience, angle). If they already gave a topic, proceed.
-2. **Research.** Dispatch the SEO Research Agent to produce a content brief (target keyword, intent,
-   outline, slug, category, FAQs, link ideas).
-3. **Write (text only — NO images yet).** Give the brief to the Blog Writer to produce the complete
-   `BLOG_POSTS` object, but with an **image plan only** — for each image the post will use, the
-   Writer specifies the filename, a short description of the intended visual, `alt`, and `caption`.
+2. **Research (incl. expert persona).** Dispatch the SEO Research Agent to produce a content brief
+   (target keyword, intent, outline, slug, category, FAQs, link ideas) **and** an **Expert Author
+   Persona & Strategy** — the best-in-class writer to emulate for this topic (e.g. Steve Alder for a
+   healthcare/PHI post) plus their SEO/writing strategy.
+3. **Write (text only — NO images yet).** Give the brief to the Blog Writer and instruct it to
+   **write as the assigned expert persona** and follow that strategy, producing the complete
+   `BLOG_POSTS` object with an **image plan only** — for each image the post will use, the Writer
+   specifies the filename, a short description of the intended visual, `alt`, and `caption`. The
+   Writer must also honor the standing quality checklist (target ~15-min length, SEO meta tags,
+   verified working external links only for real examples, visual/chart suggestions, organic
+   non-AI voice, actionable takeaway, SEO FAQ, internal links, no Zappos/Airbnb/Dropbox/Figma).
    **Do NOT generate any images at this stage.** Image generation costs real money, so it happens
    only after approval.
 4. **Review & present the draft for approval.** Show the user a clean preview: title, slug, meta

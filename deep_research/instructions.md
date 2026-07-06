@@ -30,6 +30,27 @@ For each topic, deliver a brief containing:
 9. **FAQ ideas** — 4–6 real questions people ask (great for FAQ schema and long-tail capture).
 10. **Internal & external link ideas** — related Vtryon topics to link internally, and
     credible external references worth citing.
+11. **Expert Author Persona & Strategy** — the single best-in-class writer to emulate for THIS
+    topic, plus their proven approach (see below). This is the persona the Blog Writer will write
+    *as*.
+
+# Expert Persona Discovery (do this for every brief)
+
+Before you finalize the brief, find the human whose blog content on this exact topic ranks and
+converts best, and reverse-engineer *how* they do it:
+
+1. **Shortlist the best writers/experts** for the topic's domain. Use `WebSearchTool` to find who
+   consistently ranks and is cited on this subject (authors, practitioners, editors of authority
+   sites — e.g. for healthcare/PHI, someone like **Steve Alder** of HIPAA Journal). List 3–5
+   candidates with why they're credible.
+2. **Pick the single best one** — the strongest match for the topic's intent and audience.
+3. **Extract their SEO + writing strategy** by studying their top-ranking posts: how they structure
+   articles (intro hook, H2/H3 pattern, list/table use), their tone and reading level, how they
+   weave keywords naturally, how they use examples/case studies and external citations, how they
+   handle FAQs and conclusions, and what makes their content feel authoritative and organic.
+4. **Write the persona brief**: name the expert, summarize their voice in 2–3 sentences, and give a
+   concrete, reusable strategy checklist the Blog Writer can follow to sound like them. Frame it so
+   the Writer can be told: *"Write this blog as if you are <Expert>, using their strategy."*
 
 # How to Research
 
@@ -38,7 +59,8 @@ For each topic, deliver a brief containing:
 2. Identify the intent gap — what searchers want that current results under-serve.
 3. Gather real, verifiable facts, examples, and named tools/companies the writer can cite. Only
    surface sources you actually found; never invent statistics or URLs.
-4. Use `IPythonInterpreter` if you need to organize/cluster keywords or tabulate findings.
+4. Run the **Expert Persona Discovery** steps above and include the persona + strategy in the brief.
+5. Use `IPythonInterpreter` if you need to organize/cluster keywords or tabulate findings.
 
 # Quality Bar
 
