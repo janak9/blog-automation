@@ -26,6 +26,7 @@ Environment variables:
     MCP_BRIDGE_PORT   Port for this bridge              (default 9000)
 """
 
+import asyncio
 import json
 import os
 import re
@@ -35,8 +36,9 @@ import uuid
 from pathlib import Path
 
 import httpx
+import fastmcp
 from dotenv import load_dotenv
-from fastmcp import FastMCP
+from fastmcp import Context, FastMCP
 from fastmcp.server.dependencies import get_http_headers
 
 from cost_tracker import CostTracker
@@ -60,6 +62,15 @@ MCP_BRIDGE_PORT = int(os.getenv("MCP_BRIDGE_PORT", "9000"))
 #                        a GitHub OAuth app. Set GITHUB_OAUTH_CLIENT_ID/SECRET and PUBLIC_BASE_URL.
 MCP_AUTH_MODE = os.getenv("MCP_AUTH_MODE", "token").strip().lower()
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").rstrip("/")
+
+# fastmcp's HTTP transport has DNS-rebinding protection that validates the Host header against an
+# allow-list (default: localhost only). Behind a tunnel (ngrok / cloudflared) the Host header is the
+# public tunnel domain, so requests are rejected with "421 Misdirected Request". Allow the tunnel
+# host(s) through — the bridge is already protected by its own token/OAuth. Set MCP_ALLOWED_HOSTS to
+# a comma-separated list (or a specific domain) to tighten this; default "*" trusts any host.
+_ALLOWED_HOSTS = [h.strip() for h in os.getenv("MCP_ALLOWED_HOSTS", "*").split(",") if h.strip()]
+fastmcp.settings.http_allowed_hosts = _ALLOWED_HOSTS
+fastmcp.settings.http_allowed_origins = _ALLOWED_HOSTS
 
 # Per-conversation history so multi-turn commands (draft -> revise -> approve ->
 # deploy) keep context. The swarm's FastAPI is stateless, so the client (this
@@ -256,7 +267,7 @@ def _call_swarm(instruction: str, conversation_id: str = "mobile", on_progress=N
                             mv = re.search(r'"num_variants"\s*:\s*"?(\d+)"?', item_str)
                             n = int(mv.group(1)) if mv else 1
                             img_model = next(
-                                (k for k in ("gemini-3-pro-image-preview", "gemini-2.5-flash-image", "gpt-image-1.5")
+                                (k for k in ("gemini-3-pro-image", "gemini-2.5-flash-image", "gpt-image-1.5")
                                  if k in item_str),
                                 "unknown",
                             )
@@ -330,6 +341,10 @@ def run_seo_blog_swarm(instruction: str, conversation_id: str = "mobile") -> str
     Gujarati) as a pull request. A task can take several minutes, so this returns right away
     with a job id instead of blocking.
 
+    DO NOT ask the user for file paths, an output directory, or a working directory — the swarm
+    manages all file locations itself (it stages images internally and deploys to the site repo as
+    a pull request). There is nothing path-related for the user to decide. Just pass their request.
+
     IMPORTANT: after calling this, call `check_blog_job(job_id)` to get the result. Do NOT
     resend the same instruction while a job is running — that starts a duplicate pipeline.
     Keep the same conversation_id across turns to continue a thread (draft -> revise ->
@@ -360,11 +375,13 @@ def run_seo_blog_swarm(instruction: str, conversation_id: str = "mobile") -> str
 
 
 @mcp.tool
-def check_blog_job(job_id: str) -> str:
+async def check_blog_job(job_id: str, ctx: Context | None = None) -> str:
     """Check a swarm job started by run_seo_blog_swarm. Returns the result when ready.
 
-    This waits briefly (long-poll) for the job to finish before returning, so you usually
-    only need a few calls. If it says 'still running', call again.
+    While it waits, it emits live MCP progress notifications for each new step (research →
+    drafting → images → deploy), so clients that render progress show it in real time. It also
+    returns the full progress trail as text. It long-polls briefly, so if it says 'still
+    running', call again.
 
     Args:
         job_id: The id returned by run_seo_blog_swarm.
@@ -375,14 +392,24 @@ def check_blog_job(job_id: str) -> str:
     if not job:
         return f"No job '{job_id}' found. Start one with run_seo_blog_swarm, or it may have expired."
 
-    # Long-poll up to ~45s so each check stays under client/tunnel timeouts.
+    # Long-poll up to ~45s so each check stays under client/tunnel timeouts. Emit a live
+    # progress notification for each new step as it appears.
+    emitted = 0
     deadline = time.time() + 45
     while time.time() < deadline:
         with _JOBS_LOCK:
             status = _JOBS[job_id]["status"]
+            progress = list(_JOBS[job_id].get("progress", []))
+        if ctx is not None and len(progress) > emitted:
+            for i in range(emitted, len(progress)):
+                try:
+                    await ctx.report_progress(progress=i + 1, total=None, message=progress[i])
+                except Exception:
+                    pass
+            emitted = len(progress)
         if status != "running":
             break
-        time.sleep(2)
+        await asyncio.sleep(2)
 
     with _JOBS_LOCK:
         job = _JOBS[job_id]
@@ -418,5 +445,13 @@ if __name__ == "__main__":
             "command your swarm. Set it in .env before exposing this publicly.",
             flush=True,
         )
-    # Streamable HTTP transport; the MCP endpoint is served at /mcp
-    mcp.run(transport="http", host="127.0.0.1", port=MCP_BRIDGE_PORT)
+    # Streamable HTTP transport; the MCP endpoint is served at /mcp.
+    # Pass allowed_hosts/allowed_origins explicitly so requests coming through a tunnel
+    # (ngrok / cloudflared) with a public Host header aren't rejected with 421.
+    mcp.run(
+        transport="http",
+        host="127.0.0.1",
+        port=MCP_BRIDGE_PORT,
+        allowed_hosts=_ALLOWED_HOSTS,
+        allowed_origins=_ALLOWED_HOSTS,
+    )

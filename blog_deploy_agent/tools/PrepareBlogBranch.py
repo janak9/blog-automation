@@ -36,11 +36,14 @@ class PrepareBlogBranch(BaseTool):
         description="Absolute path to the v-try-on repository. Defaults to the standard location.",
     )
     base_branch: str = Field(
-        default="main", description="Branch to base the new branch on. Defaults to 'main'."
+        default="",
+        description="Branch to base the new branch on. Defaults to the DEPLOY_BASE_BRANCH env var, "
+        "or 'main' if unset. Set to 'dev' to base off (and later target) dev.",
     )
 
     def run(self):
         repo = self.repo_path
+        base_branch = self.base_branch or os.getenv("DEPLOY_BASE_BRANCH", "main")
         if not os.path.isdir(os.path.join(repo, ".git")):
             return f"Error: {repo} is not a git repository."
 
@@ -56,8 +59,8 @@ class PrepareBlogBranch(BaseTool):
 
         steps = []
         for args in (
-            ["git", "checkout", self.base_branch],
-            ["git", "pull", "origin", self.base_branch, "--ff-only"],
+            ["git", "checkout", base_branch],
+            ["git", "pull", "origin", base_branch, "--ff-only"],
         ):
             code, out, err = _run(args, repo)
             steps.append(f"$ {' '.join(args)}\n{(out or err).strip()}")
@@ -73,7 +76,7 @@ class PrepareBlogBranch(BaseTool):
 
         return (
             f"Repository ready. On fresh branch '{self.branch_name}' based on latest "
-            f"origin/{self.base_branch}.\n\n" + "\n\n".join(steps)
+            f"origin/{base_branch}.\n\n" + "\n\n".join(steps)
         )
 
 

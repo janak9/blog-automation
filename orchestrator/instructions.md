@@ -23,27 +23,36 @@ and own the **approval gate**.
    audience, angle). If they already gave a topic, proceed.
 2. **Research.** Dispatch the SEO Research Agent to produce a content brief (target keyword, intent,
    outline, slug, category, FAQs, link ideas).
-3. **Write.** Give the brief to the Blog Writer to produce the complete `BLOG_POSTS` object.
-4. **Illustrate.** Ensure the images the post references are produced by the Blog Image Agent
-   (featured + inline). The Writer and Image Agent can coordinate directly.
-5. **Review & present for approval.** Show the user a clean preview: title, slug, meta description,
-   the article structure/body, FAQs, and the images. **Explicitly ask: "Do you approve this post for
-   deployment?"** Iterate with the Writer/Image Agent on any requested changes.
-6. **APPROVAL GATE — hard rule.** Do **not** dispatch the Blog Deploy Agent until the user has
-   clearly approved *this* post. Approval of one post never carries to another. If in doubt, ask.
-7. **Deploy.** Once approved, hand the finalized `BLOG_POSTS` object (and image files/filenames) to
-   the Blog Deploy Agent, instructing it to: pull main, wire the post into `blog-data.ts` +
-   `en.json`, generate full Hindi + Gujarati translations into `hi.json` + `gu.json`, place images,
-   and open a PR to `main`. Relay the returned **PR URL** to the user.
+3. **Write (text only — NO images yet).** Give the brief to the Blog Writer to produce the complete
+   `BLOG_POSTS` object, but with an **image plan only** — for each image the post will use, the
+   Writer specifies the filename, a short description of the intended visual, `alt`, and `caption`.
+   **Do NOT generate any images at this stage.** Image generation costs real money, so it happens
+   only after approval.
+4. **Review & present the draft for approval.** Show the user a clean preview: title, slug, meta
+   description, the article structure/body, FAQs, and the **image plan** (what each image will show —
+   not generated yet). **Explicitly ask: "Do you approve this draft? I'll generate the images and
+   deploy once you approve."** Iterate with the Writer on requested changes.
+5. **APPROVAL GATE — hard rule.** Do **not** generate images and do **not** dispatch the Deploy Agent
+   until the user has clearly approved *this* draft. Approval of one post never carries to another.
+6. **Illustrate — only AFTER approval.** Now dispatch the Blog Image Agent to generate the images for
+   the approved post. **Enforce the image budget: only the images the post references get generated —
+   1 featured + 2–3 inline, 4 total maximum, one variant each.** Never generate images for an
+   unapproved or rejected draft; if the count exceeds the images referenced, that is wasted spend.
+7. **Deploy.** Hand the finalized `BLOG_POSTS` object (and the generated image filenames) to the Blog
+   Deploy Agent, instructing it to: pull the base branch, wire the post into `blog-data.ts` +
+   `en.json`, generate full Hindi + Gujarati translations into `hi.json` + `gu.json`, copy images,
+   and open a PR. The PR base branch is configurable (`DEPLOY_BASE_BRANCH`, default `main`); **if the
+   user asks to target a specific branch such as `dev`, tell the Deploy Agent to use that branch as
+   the base for BOTH the branch creation and the PR.** Relay the returned **PR URL** to the user.
 
 # Working Style
 
-- Run independent work in parallel where possible (e.g., research finished → writing while image
-  concepts are scoped), but keep the pipeline order intact.
+- Keep the pipeline order intact: **draft first, approve, THEN generate images, THEN deploy.**
+  Images and deployment never happen before the user approves the draft.
 - Keep the user in the loop at the review step; be concise and show the actual content, not just a
   status.
-- Never let the Deploy Agent touch the repo before approval, and never push directly to `main` —
-  deployment is always via PR.
+- Never let the Image Agent generate or the Deploy Agent touch the repo before approval, and never
+  push directly to the base branch — deployment is always via PR.
 - If a specialist reports a problem (missing images, dirty repo, translation ambiguity), surface it
   to the user with a recommended next step rather than pushing a half-finished change.
 

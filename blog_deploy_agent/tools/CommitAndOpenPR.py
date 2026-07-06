@@ -55,10 +55,16 @@ class CommitAndOpenPR(BaseTool):
         description="Pull request description (markdown). Summarize the post, languages added, and files changed.",
     )
     repo_path: str = Field(default=DEFAULT_REPO, description="Absolute path to the v-try-on repository.")
-    base_branch: str = Field(default="main", description="PR base branch. Defaults to 'main'.")
+    base_branch: str = Field(
+        default="",
+        description="PR base branch (the branch the PR merges INTO). Defaults to the "
+        "DEPLOY_BASE_BRANCH env var, or 'main' if unset. Set to 'dev' to open the PR against dev. "
+        "Must match the base_branch you used in PrepareBlogBranch.",
+    )
 
     def run(self):
         repo = self.repo_path
+        base_branch = self.base_branch or os.getenv("DEPLOY_BASE_BRANCH", "main")
         log = []
 
         code, out, err = _run(["git", "status", "--porcelain"], repo)
@@ -85,14 +91,14 @@ class CommitAndOpenPR(BaseTool):
             return (
                 "Branch pushed successfully, but no GitHub token was available to open the PR "
                 f"automatically. Open it manually:\n"
-                f"  base: {self.base_branch}  <-  compare: {self.branch_name}"
+                f"  base: {base_branch}  <-  compare: {self.branch_name}"
             )
 
         payload = json.dumps(
             {
                 "title": self.pr_title,
                 "head": self.branch_name,
-                "base": self.base_branch,
+                "base": base_branch,
                 "body": self.pr_body,
             }
         ).encode("utf-8")
@@ -123,7 +129,7 @@ class CommitAndOpenPR(BaseTool):
                 )
             return (
                 f"Branch pushed, but opening the PR failed (HTTP {e.code}): {body[:300]}\n"
-                f"Open it manually: base {self.base_branch} <- {self.branch_name}"
+                f"Open it manually: base {base_branch} <- {self.branch_name}"
             )
         except Exception as e:
             return f"Branch pushed, but opening the PR failed: {e}"

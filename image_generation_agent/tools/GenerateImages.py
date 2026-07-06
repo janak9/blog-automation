@@ -42,7 +42,7 @@ class GenerateImages(BaseTool):
             "If a path is provided, the image is saved at that path."
         ),
     )
-    model: Literal["gemini-2.5-flash-image", "gemini-3-pro-image-preview", "gpt-image-1.5"] = Field(
+    model: Literal["gemini-2.5-flash-image", "gemini-3-pro-image", "gpt-image-1.5"] = Field(
         default="gemini-2.5-flash-image",
         description="Image model to use.",
     )

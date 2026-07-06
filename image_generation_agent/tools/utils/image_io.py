@@ -27,7 +27,7 @@ ALL_ASPECT_RATIOS = (
 )
 SUPPORTED_ASPECT_RATIOS_BY_MODEL = {
     "gemini-2.5-flash-image": set(ALL_ASPECT_RATIOS),
-    "gemini-3-pro-image-preview": set(ALL_ASPECT_RATIOS),
+    "gemini-3-pro-image": set(ALL_ASPECT_RATIOS),
     # OpenAI image API size options are:
     # 1024x1024 (1:1), 1024x1536 (2:3), 1536x1024 (3:2)
     "gpt-image-1.5": {"1:1", "2:3", "3:2"},
@@ -38,16 +38,18 @@ OPENAI_SIZE_BY_ASPECT_RATIO = {
     "3:2": "1536x1024",
 }
 
-if os.path.isfile("/.dockerenv"):
-    MNT_DIR = Path("/app/mnt")
-else:
-    MNT_DIR = Path(__file__).parent.parent.parent.parent / "mnt"
+_PROJECT_ROOT = Path("/app") if os.path.isfile("/.dockerenv") else Path(__file__).parent.parent.parent.parent
+# Generated images are temporary staging files. They always land here — never per-product,
+# never prompted. The Blog Deploy Agent copies the finals into the repo's public/blog/.
+_OUTPUT_IMAGES_DIR = _PROJECT_ROOT / "output" / "images"
+
+# Back-compat alias (older references).
+MNT_DIR = _PROJECT_ROOT / "mnt"
 
 
-def get_images_dir(product_name: str) -> Path:
-    images_dir = MNT_DIR / product_name / "generated_images"
-    images_dir.mkdir(parents=True, exist_ok=True)
-    return images_dir
+def get_images_dir(product_name: str = "") -> Path:
+    _OUTPUT_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+    return _OUTPUT_IMAGES_DIR
 
 
 def find_image_path_from_name(images_dir: Path, image_name: str) -> Path | None:

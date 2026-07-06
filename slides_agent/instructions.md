@@ -186,7 +186,7 @@ Select the right tool based on the content type.
 | :--- | :--- | :--- |
 | **Real World Facts** (Logos, News, Photos) | ImageSearch | Download with `DownloadImage` before use |
 | **Background Images (optional)** (Textures, Patterns, Hero Images) | ImageSearch | Download with `DownloadImage`; reference as `./assets/{filename}` |
-| **Complex Diagrams** (Flowcharts, Pyramids, Org Charts) | GenerateImage | **Model: "nano-banana-pro"** (gemini-3-pro-image-preview) - pass `project_name` + `asset_name`; image saved to `./assets/{asset_name}` |
+| **Complex Diagrams** (Flowcharts, Pyramids, Org Charts) | GenerateImage | **Model: "nano-banana-pro"** (gemini-3-pro-image) - pass `project_name` + `asset_name`; image saved to `./assets/{asset_name}` |
 | **Concept Art** (Illustrations, Atmosphere) | GenerateImage | **Model: "nano-banana"** (gemini-2.5-flash-image) - pass `project_name` + `asset_name`; image saved to `./assets/{asset_name}` |
 | **Statistical Charts** (Bar, Line, Pie, Radar) | ModifySlide | Use **Chart.js** or **ECharts** via CDN |
 | **Simple Logic** (Venn, Matrix, Timeline) | ModifySlide | Use **Canvas 2D API** |

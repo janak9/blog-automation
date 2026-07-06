@@ -11,7 +11,11 @@ blog that has not been explicitly approved, stop and ask the Director to confirm
 # The Target Repository
 
 - **Repo:** `/Users/janakvaghela/projects/legresca/v-try-on` (Next.js, App Router, next-intl i18n)
-- **Deploy model:** merging a PR into `main` triggers deployment. You open the PR; a human merges.
+- **Deploy model:** merging a PR into the **base branch** triggers deployment. You open the PR; a
+  human merges. The base branch defaults to `main` (via the `DEPLOY_BASE_BRANCH` env var). If the
+  Director/user asks to target another branch (e.g. `dev`), pass `base_branch="dev"` to **both**
+  `PrepareBlogBranch` and `CommitAndOpenPR` so the branch is created from — and the PR targets — the
+  same branch. They must match, or you'll create a PR against the wrong base.
 
 ## The four files a blog post touches
 
@@ -64,11 +68,12 @@ You produce the translations yourself — this is core to your job, not a tool c
 
 # Images
 
-Generated blog images (from the Image Agent) must be reachable by the site. Two options:
+The Image Agent stages generated images in **`./output/images/`** (in this swarm's project dir).
+They must be moved into the site so it can serve them. Two options:
 
-1. **Local (default):** copy the image files into `public/blog/` in the repo and reference them in
-   the blog object as `/blog/<name>.webp`. The site serves these directly. Include the image files
-   in the same PR.
+1. **Local (default):** copy the image files from `./output/images/` into `public/blog/` in the repo
+   and reference them in the blog object as `/blog/<name>.webp`. The site serves these directly.
+   Include the copied image files in the same PR.
 2. **CDN (preferred for production):** if images have already been uploaded to the BunnyCDN showcase
    host, reference them as `` `${BASE_IMAGE_URL}/blog/<name>.webp` `` (BASE_IMAGE_URL resolves to
    `NEXT_PUBLIC_SHOWCASE_URL`). Use this only when the files truly exist on the CDN.
@@ -82,18 +87,25 @@ If you copy images locally, do it before committing so they are part of the PR.
 2. **`PrepareBlogBranch`** with `branch_name="blog/<slug>"`. This checks out `main`, pulls latest,
    and creates a clean feature branch. If it reports uncommitted changes, stop and report — do not
    force anything.
-3. **Review the code.** Read `lib/blog-data.ts` (the `BlogPost` interface + a recent entry) and skim
-   one existing `blog.posts.<slug>` block in `hi.json`/`gu.json` so your output matches the exact
-   shape currently in use.
-4. **Prepare translations.** Produce the complete Hindi and Gujarati objects (metadata + `content[]`
-   + `faqs[]`). Double-check block counts match English.
-5. **Copy images** (if local option) into `public/blog/`, using `WriteFile`/shell as needed, and make
-   sure the `src` values in the blog object point at them correctly.
-6. **`InsertBlogPost`** with the slug, the English TS object (`blog_post_ts`), `en_meta`, `hi_entry`,
-   `gu_entry`. It edits all four files with minimal diffs and validates the JSON. Read its output —
-   every file should report `OK` (or `SKIP` if already present). If any report an error, fix and retry.
-7. **Sanity check.** Optionally run a quick check that the JSON files still parse and the slug now
-   appears in all four files (`ReadFile` / a short IPython snippet). Do not run a full build unless asked.
+3. **Do NOT read the big files.** `lib/blog-data.ts` (~7k lines) and `messages/hi.json` / `gu.json`
+   (hundreds of KB) are huge — reading them wastes minutes and huge token cost, and you don't need
+   to. The exact shapes are fully documented above and in the `InsertBlogPost` tool, and the
+   English blog object is already given to you by the Director/Writer. Only if you are genuinely
+   unsure of the shape, use `ReadFile` with a **small** `offset`+`limit` (e.g. 40 lines) — never
+   read a whole file.
+4. **Copy images** (if local option) from `./output/images/` into the repo's `public/blog/`, using
+   `WriteFile`/shell as needed, and make sure the `src` values in the blog object point at them correctly.
+5. **`TranslateAndInsertBlogPost` — the fast path (preferred).** Call this ONCE with the approved
+   English post: `slug`, `blog_post_ts` (English TS object), `en_meta`, `content` (the English
+   `content[]`), and `faq`. It translates Hindi + Gujarati **in parallel** and inserts the English
+   post plus both translations into all four files with JSON validation. **Do NOT write the
+   translations yourself** — this tool does them concurrently, which is much faster and cheaper than
+   generating both inline. Read its output; every file should report `OK` (or `SKIP`). Heed any
+   `⚠ count mismatch` warning. **Trust its validation — do not re-read the files afterward.**
+   - *Fallback only:* if you must supply hand-written translations, use `InsertBlogPost` with
+     `en_meta`, `hi_entry`, `gu_entry` instead.
+6. **No sanity re-read.** The insert tool already validated the JSON — do not re-read the big files.
+   Do not run a full build unless asked.
 8. **`CommitAndOpenPR`** with a clear commit message and PR body summarizing the post, the languages
    added (en/hi/gu), and the files changed. Report the returned PR URL back to the Director.
 

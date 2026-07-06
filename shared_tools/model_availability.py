@@ -50,7 +50,7 @@ def image_model_availability_message(tool=None, *, failed_requirement: str | Non
             "",
             "Available image models/providers in this environment:",
             f"- gemini-2.5-flash-image: {_configured(google_available())} (requires GOOGLE_API_KEY add-on)",
-            f"- gemini-3-pro-image-preview: {_configured(google_available())} (requires GOOGLE_API_KEY add-on)",
+            f"- gemini-3-pro-image: {_configured(google_available())} (requires GOOGLE_API_KEY add-on)",
             f"- gpt-image-1.5: {_configured(direct_openai_available(tool))} (requires OpenAI API key auth; not Codex browser auth)",
             f"- background removal / Pixelcut: {_configured(fal_available())} (requires FAL_KEY add-on)",
             "",

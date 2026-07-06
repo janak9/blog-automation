@@ -83,6 +83,9 @@ so Claude knows how to operate the swarm:
 > (English + Hindi + Gujarati) as a **pull request**.
 >
 > Rules:
+> - **Never ask me for file paths, an output directory, or a working directory.** The swarm manages
+>   all file locations itself (images stage internally; the post deploys to the site repo as a PR).
+>   There is nothing path-related for me to choose — just start the task.
 > - Tasks run in the background. Call `run_seo_blog_swarm(instruction, conversation_id="mobile")`
 >   to start (it returns a job id instantly), then call `check_blog_job(job_id)` and keep polling
 >   until it returns the result. **Never resend the instruction while a job is running** — that

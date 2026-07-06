@@ -29,7 +29,9 @@ def create_blog_deploy_agent() -> Agent:
         tools=[IPythonInterpreter],
         model=get_default_model(),
         model_settings=ModelSettings(
-            reasoning=Reasoning(effort="high", summary="auto") if is_openai_provider() else None,
+            # Translation + wiring is mechanical, not deep-reasoning work. Medium keeps it
+            # accurate while being noticeably faster/cheaper than high.
+            reasoning=Reasoning(effort="medium", summary="auto") if is_openai_provider() else None,
         ),
         conversation_starters=[
             "Deploy the approved blog post to the v-try-on repo with Hindi and Gujarati translations.",

@@ -16,7 +16,7 @@ class GenerateImage(BaseTool):
     Generate images using Google Gemini models.
     
     Supports two modes:
-    - Complex Diagrams (Flowcharts, Pyramids, Org Charts): Uses nano-banana-pro (gemini-3-pro-image-preview) optimized for text rendering
+    - Complex Diagrams (Flowcharts, Pyramids, Org Charts): Uses nano-banana-pro (gemini-3-pro-image) optimized for text rendering
     - Concept Art (Illustrations, Atmosphere): Uses nano-banana (gemini-2.5-flash-image) for faster generation
     
     The generated image is saved to the specified output path or to the project's assets folder.
@@ -61,7 +61,7 @@ class GenerateImage(BaseTool):
                 full_prompt = f"{self.prompt} Style: {self.style}"
 
             if self.image_type == "diagram":
-                model = "gemini-3-pro-image-preview"
+                model = "gemini-3-pro-image"
                 full_prompt = f"Technical diagram: {full_prompt}. Clear labels, professional layout, high contrast."
             else:
                 model = "gemini-2.5-flash-image"
