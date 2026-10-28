@@ -20,13 +20,16 @@ and add the printed https URL (with the /mcp path) as a custom connector in Clau
 Environment variables:
     SWARM_API_URL     Base URL of server.py            (default http://127.0.0.1:8080)
     SWARM_AGENCY      Agency name from server.py        (default "open-swarm")
-    APP_TOKEN         Bearer token server.py expects    (must match server.py)
-    MCP_BRIDGE_TOKEN  Shared secret this bridge requires from Claude (optional but
-                      strongly recommended, since the tunnel URL is public).
+    APP_TOKEN         Bearer token server.py expects    (required; must match server.py)
+    MCP_BRIDGE_TOKEN  Shared secret this bridge requires from Claude (required in
+                      token mode — the bridge refuses to start without it).
     MCP_BRIDGE_PORT   Port for this bridge              (default 9000)
+    MCP_ALLOWED_HOSTS Public Host headers to accept     (default *.trycloudflare.com plus
+                      PUBLIC_BASE_URL's host; comma-separated, glob patterns allowed)
 """
 
 import asyncio
+import hmac
 import json
 import os
 import re
@@ -34,6 +37,7 @@ import threading
 import time
 import uuid
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import httpx
 import fastmcp
@@ -64,13 +68,21 @@ MCP_AUTH_MODE = os.getenv("MCP_AUTH_MODE", "token").strip().lower()
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").rstrip("/")
 
 # fastmcp's HTTP transport has DNS-rebinding protection that validates the Host header against an
-# allow-list (default: localhost only). Behind a tunnel (ngrok / cloudflared) the Host header is the
-# public tunnel domain, so requests are rejected with "421 Misdirected Request". Allow the tunnel
-# host(s) through — the bridge is already protected by its own token/OAuth. Set MCP_ALLOWED_HOSTS to
-# a comma-separated list (or a specific domain) to tighten this; default "*" trusts any host.
-_ALLOWED_HOSTS = [h.strip() for h in os.getenv("MCP_ALLOWED_HOSTS", "*").split(",") if h.strip()]
+# allow-list (localhost is always allowed). Behind a tunnel (ngrok / cloudflared) the Host header is
+# the public tunnel domain, so it must be listed or requests are rejected with "421 Misdirected
+# Request". Default: Cloudflare quick tunnels plus PUBLIC_BASE_URL's host. For anything else set
+# MCP_ALLOWED_HOSTS to a comma-separated list of hosts or glob patterns (e.g. "*.ngrok-free.dev").
+_DEFAULT_ALLOWED_HOSTS = ["*.trycloudflare.com"]
+if PUBLIC_BASE_URL:
+    _DEFAULT_ALLOWED_HOSTS.append(urlsplit(PUBLIC_BASE_URL).hostname or "")
+_ALLOWED_HOSTS = [
+    h.strip() for h in os.getenv("MCP_ALLOWED_HOSTS", ",".join(_DEFAULT_ALLOWED_HOSTS)).split(",") if h.strip()
+]
+# Origins stay open: Claude's connector origin is not a tunnel host, and the bearer token / OAuth
+# is what authenticates callers. Set MCP_ALLOWED_ORIGINS to restrict it further.
+_ALLOWED_ORIGINS = [h.strip() for h in os.getenv("MCP_ALLOWED_ORIGINS", "*").split(",") if h.strip()]
 fastmcp.settings.http_allowed_hosts = _ALLOWED_HOSTS
-fastmcp.settings.http_allowed_origins = _ALLOWED_HOSTS
+fastmcp.settings.http_allowed_origins = _ALLOWED_ORIGINS
 
 # Per-conversation history so multi-turn commands (draft -> revise -> approve ->
 # deploy) keep context. The swarm's FastAPI is stateless, so the client (this
@@ -102,13 +114,14 @@ mcp = FastMCP("Vtryon SEO Blog Swarm", auth=_build_auth())
 
 def _check_auth() -> None:
     """Static-token gate for 'token' mode. OAuth modes enforce auth at the transport layer."""
-    if MCP_AUTH_MODE != "token":
-        return  # OAuth (e.g. github) already authenticated the request.
+    if MCP_AUTH_MODE == "github":
+        return  # OAuth already authenticated the request.
     if not MCP_BRIDGE_TOKEN:
-        return  # No secret set — relies on the tunnel URL being private. Not recommended.
+        # Fail closed: an unset secret must never mean "anyone can command the swarm".
+        raise PermissionError("Unauthorized: MCP_BRIDGE_TOKEN is not configured on the bridge.")
     headers = get_http_headers() or {}
     provided = (headers.get("authorization") or headers.get("Authorization") or "").strip()
-    if provided != f"Bearer {MCP_BRIDGE_TOKEN}":
+    if not hmac.compare_digest(provided.encode(), f"Bearer {MCP_BRIDGE_TOKEN}".encode()):
         raise PermissionError("Unauthorized: missing or invalid bridge token.")
 
 
@@ -439,12 +452,16 @@ def reset_conversation(conversation_id: str = "mobile") -> str:
 
 
 if __name__ == "__main__":
-    if not MCP_BRIDGE_TOKEN:
-        print(
-            "WARNING: MCP_BRIDGE_TOKEN is not set — anyone who discovers the tunnel URL can "
-            "command your swarm. Set it in .env before exposing this publicly.",
-            flush=True,
+    if MCP_AUTH_MODE not in ("token", "github"):
+        raise SystemExit(f"Refusing to start: unknown MCP_AUTH_MODE {MCP_AUTH_MODE!r} (use 'token' or 'github').")
+    if MCP_AUTH_MODE == "token" and not MCP_BRIDGE_TOKEN:
+        raise SystemExit(
+            "Refusing to start: MCP_BRIDGE_TOKEN is not set, so anyone who discovers the tunnel URL "
+            "could command your swarm. Generate one with "
+            "`python3 -c \"import secrets; print(secrets.token_urlsafe(32))\"` and add it to .env."
         )
+    if not APP_TOKEN:
+        raise SystemExit("Refusing to start: APP_TOKEN is not set (server.py requires it). Add it to .env.")
     # Streamable HTTP transport; the MCP endpoint is served at /mcp.
     # Pass allowed_hosts/allowed_origins explicitly so requests coming through a tunnel
     # (ngrok / cloudflared) with a public Host header aren't rejected with 421.
@@ -453,5 +470,5 @@ if __name__ == "__main__":
         host="127.0.0.1",
         port=MCP_BRIDGE_PORT,
         allowed_hosts=_ALLOWED_HOSTS,
-        allowed_origins=_ALLOWED_HOSTS,
+        allowed_origins=_ALLOWED_ORIGINS,
     )

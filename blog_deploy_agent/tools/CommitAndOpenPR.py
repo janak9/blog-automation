@@ -16,9 +16,10 @@ def _run(args, cwd):
 
 
 def _parse_remote(remote_url: str):
-    """Extract (token, owner, repo) from an https github remote URL.
+    """Extract (user, owner, repo) from an https github remote URL.
 
-    Supports 'https://user:token@github.com/owner/repo(.git)'. Token may be absent.
+    Supports 'https://[user@]github.com/owner/repo(.git)'. Any secret embedded in the URL is
+    ignored: tokens must never be stored in git remotes (see _github_token).
     """
     m = re.match(
         r"https://(?:([^@/]+)@)?github\.com/([^/]+)/([^/.]+)(?:\.git)?/?$", remote_url.strip()
@@ -26,12 +27,25 @@ def _parse_remote(remote_url: str):
     if not m:
         return None, None, None
     creds, owner, repo = m.group(1), m.group(2), m.group(3)
-    token = None
-    if creds and ":" in creds:
-        token = creds.split(":", 1)[1]
-    elif creds:
-        token = creds
-    return token, owner, repo
+    user = creds.split(":", 1)[0] if creds else None
+    return user, owner, repo
+
+
+def _github_token(user):
+    """Token for the GitHub API: GITHUB_TOKEN / GH_TOKEN, else the gh CLI's keychain login.
+
+    When the remote names a user ('https://legresca-admin@github.com/...'), ask gh for that
+    account's token so the PR is never opened under the wrong identity.
+    """
+    token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
+    if token:
+        return token
+    args = ["gh", "auth", "token", "--hostname", "github.com"] + (["--user", user] if user else [])
+    try:
+        code, out, _ = _run(args, None)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return out if code == 0 and out else None
 
 
 class CommitAndOpenPR(BaseTool):
@@ -81,16 +95,16 @@ class CommitAndOpenPR(BaseTool):
             if code != 0:
                 return "Error during git commit/push:\n\n" + "\n\n".join(log)
 
-        # Resolve remote → token/owner/repo for the API call.
+        # Resolve remote → user/owner/repo, then the token for the API call.
         code, remote_url, err = _run(["git", "remote", "get-url", "origin"], repo)
         if code != 0:
             return "Pushed branch, but could not read origin URL to open a PR:\n" + err
-        token, owner, name = _parse_remote(remote_url)
-        token = token or os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
+        user, owner, name = _parse_remote(remote_url)
+        token = _github_token(user)
         if not (token and owner and name):
             return (
                 "Branch pushed successfully, but no GitHub token was available to open the PR "
-                f"automatically. Open it manually:\n"
+                f"automatically (run `gh auth login`{f' as {user}' if user else ''}). Open it manually:\n"
                 f"  base: {base_branch}  <-  compare: {self.branch_name}"
             )
 
@@ -136,4 +150,4 @@ class CommitAndOpenPR(BaseTool):
 
 
 if __name__ == "__main__":
-    print(_parse_remote("https://user:ghp_xxx@github.com/Legresca/v-try-on"))
+    print(_parse_remote("https://legresca-admin@github.com/Legresca/v-try-on"))

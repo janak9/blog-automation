@@ -5,7 +5,7 @@ from agency_swarm import Agent, ModelSettings
 from agency_swarm.tools import IPythonInterpreter
 from openai.types.shared import Reasoning
 
-from config import get_default_model, is_openai_provider
+from config import allow_code_execution, get_default_model, is_openai_provider
 
 _INSTRUCTIONS_PATH = Path(__file__).parent / "instructions.md"
 
@@ -26,7 +26,7 @@ def create_blog_deploy_agent() -> Agent:
         ),
         instructions=_build_instructions(),
         tools_folder="./tools",
-        tools=[IPythonInterpreter],
+        tools=[IPythonInterpreter] if allow_code_execution() else [],
         model=get_default_model(),
         model_settings=ModelSettings(
             # Translation + wiring is mechanical, not deep-reasoning work. Medium keeps it

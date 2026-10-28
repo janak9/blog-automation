@@ -18,6 +18,15 @@ def is_openai_provider() -> bool:
     return "/" not in os.getenv("DEFAULT_MODEL", "")
 
 
+def allow_code_execution() -> bool:
+    """Return False when agents must not get code-execution tools (IPythonInterpreter).
+
+    server.py sets SWARM_DISABLE_CODE_EXEC=1 because its API is reachable through
+    mcp_bridge.py and a public tunnel. Local terminal runs keep the tools.
+    """
+    return os.getenv("SWARM_DISABLE_CODE_EXEC") != "1"
+
+
 def _resolve(model: str):
     """Route 'provider/model' strings through LitellmModel.
 

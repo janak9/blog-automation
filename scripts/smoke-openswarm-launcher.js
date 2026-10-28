@@ -197,7 +197,7 @@ async function assertStateRoot() {
     env: {},
     stateRoot: path.join('/home/tester', '.openswarm'),
   })
-  assert.equal(env.AGENTSWARM_PRODUCT_DISPLAY_NAME, 'OpenSwarm')
+  assert.equal(env.AGENTSWARM_PRODUCT_DISPLAY_NAME, 'Legresca')
   assert.equal(env.AGENTSWARM_PRODUCT_STATE_ROOT, path.join('/home/tester', '.openswarm'))
   assert.equal(env.AGENTSWARM_PRODUCT_VERSION, pkg.version)
   assert.equal(env.AGENTSWARM_MARKETPLACE_SWARM_ID, 'VRSEN/OpenSwarm')
@@ -366,7 +366,7 @@ function assertLauncherDelegatesToDependency() {
     assert.equal(result.stdout.trim(), 'platform-smoke')
 
     const env = JSON.parse(fs.readFileSync(envPath, 'utf8'))
-    assert.equal(env.AGENTSWARM_PRODUCT_DISPLAY_NAME, 'OpenSwarm')
+    assert.equal(env.AGENTSWARM_PRODUCT_DISPLAY_NAME, 'Legresca')
     assert.equal(env.AGENTSWARM_PRODUCT_COMMAND, 'openswarm')
     assert.equal(env.AGENTSWARM_PRODUCT_VERSION, '7.8.9-smoke')
     assert.equal(env.AGENTSWARM_MARKETPLACE_SWARM_ID, 'VRSEN/OpenSwarm')
@@ -564,7 +564,7 @@ function assertWorkflowEnvWriter() {
   })
   assert.equal(result.status, 0, `env writer exited with ${result.status}: ${result.stderr}`)
   assert.ok(result.stdout.includes('AGENTSWARM_PRODUCT_DISPLAY_NAME<<__OPENSWARM_ENV__'))
-  assert.ok(result.stdout.includes('OpenSwarm'))
+  assert.ok(result.stdout.includes('Legresca'))
   assert.ok(result.stdout.includes('AGENTSWARM_PRODUCT_VERSION<<__OPENSWARM_ENV__'))
   assert.ok(result.stdout.includes(pkg.version))
 }

@@ -6,7 +6,7 @@ from agency_swarm.tools import IPythonInterpreter, WebSearchTool
 from openai.types.shared import Reasoning
 from shared_tools import CopyFile
 
-from config import get_default_model, is_openai_provider
+from config import allow_code_execution, get_default_model, is_openai_provider
 
 _INSTRUCTIONS_PATH = Path(__file__).parent / "instructions.md"
 
@@ -34,7 +34,7 @@ def create_docs_agent() -> Agent:
             reasoning=Reasoning(effort="medium", summary="auto") if is_openai_provider() else None,
             response_include=["web_search_call.action.sources"] if is_openai_provider() else None,
         ),
-        tools=[WebSearchTool(), IPythonInterpreter, CopyFile],
+        tools=[WebSearchTool(), *([IPythonInterpreter] if allow_code_execution() else []), CopyFile],
         conversation_starters=[
             "Write a blog post from this SEO brief and emit it as a BLOG_POSTS object.",
             "Draft a 10-minute guide on AI virtual try-on for saree sellers with FAQs.",

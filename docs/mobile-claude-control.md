@@ -23,6 +23,11 @@ MCP_BRIDGE_TOKEN=<make-another-long-random-string>
 
 Generate strong values with: `python3 -c "import secrets; print(secrets.token_urlsafe(32))"`
 
+Both are required: `server.py` and `mcp_bridge.py` refuse to start without them. `server.py`
+listens on `127.0.0.1` only, and agents it serves get no code-execution tools. The bridge
+accepts `*.trycloudflare.com` and `PUBLIC_BASE_URL`'s host by default; for ngrok or another
+tunnel, set `MCP_ALLOWED_HOSTS` (e.g. `MCP_ALLOWED_HOSTS=*.ngrok-free.dev`).
+
 > The swarm can open PRs on your production repo, so treat these like passwords.
 > The swarm's built-in approval gate still applies — deploy only runs after you approve,
 > and it opens a PR (never pushes to `main`).

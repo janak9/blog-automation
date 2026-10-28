@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🚀 OpenSwarm
+# 🚀 Legresca
 
-![OpenSwarm](assets/new-framework.jpg)
+![Legresca](assets/new-framework.jpg)
 
 </div>
 
@@ -33,7 +33,7 @@ Instead of one agent trying to do everything poorly, you get **specialists coord
 
 Paste these into your terminal and watch magic happen:
 
-- **"Create a complete investor pitch for OpenSwarm"** → Full deck + executive summary + market research
+- **"Create a complete investor pitch for Legresca"** → Full deck + executive summary + market research
 - **"Research my top 5 competitors and write 3 SEO-optimized blog posts"** → Competitive analysis + keyword research + publish-ready content
 - **"Analyze this data and create a quarterly report with charts"** → Data insights + visualizations + formatted document
 - **"Generate a product launch video with animations"** → Professional video with graphics and transitions

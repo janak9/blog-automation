@@ -357,7 +357,7 @@ def smoke_product_state_root_env() -> None:
             clean_marketplace_env(),
         ):
             values = run_utils._product_env_from_config()
-        if values.get("AGENTSWARM_PRODUCT_DISPLAY_NAME") != "OpenSwarm":
+        if values.get("AGENTSWARM_PRODUCT_DISPLAY_NAME") != "Legresca":
             raise RuntimeError("OpenSwarm Python path loaded wrong fallback product config from site.USER_BASE")
         if values.get("AGENTSWARM_PRODUCT_VERSION") != "9.8.7-userbase":
             raise RuntimeError("OpenSwarm Python fallback product env did not send the package version")
@@ -865,7 +865,7 @@ def smoke_bootstrap_node_setup_installs_slides_dependencies() -> None:
         ):
             if run_utils._ensure_node_dependencies(repo, "npm"):
                 raise RuntimeError("bootstrap reported successful Node setup after command failures")
-        if "OpenSwarm will continue" not in sink.getvalue():
+        if "Legresca will continue" not in sink.getvalue():
             raise RuntimeError("bootstrap did not continue visibly after failed Node setup")
 
     invoked: list[tuple[Path, str]] = []

@@ -395,7 +395,7 @@ _REQUIRED_SLIDES_NODE_PACKAGES = (
 def _warn_slides_setup(message: str) -> None:
     print(
         f"Warning: {message}\n"
-        "  OpenSwarm will continue, but Slides Agent export features may be unavailable.\n"
+        "  Legresca will continue, but Slides Agent export features may be unavailable.\n"
     )
 
 
@@ -657,7 +657,7 @@ def main() -> None:
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
     logging.disable(logging.NOTSET)
-    print("\nStarting OpenSwarm… this may take a few seconds.")
+    print("\nStarting Legresca… this may take a few seconds.")
     _configure_demo_console()
 
     # Suppress OS-level stderr (fd 2) to prevent GLib/GIO UWP-app

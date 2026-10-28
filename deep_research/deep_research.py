@@ -2,7 +2,7 @@ from agency_swarm import Agent, ModelSettings
 from agency_swarm.tools import WebSearchTool, IPythonInterpreter
 from openai.types.shared import Reasoning
 
-from config import get_default_model, is_openai_provider
+from config import allow_code_execution, get_default_model, is_openai_provider
 
 
 def create_deep_research() -> Agent:
@@ -16,7 +16,7 @@ def create_deep_research() -> Agent:
             "and FAQ ideas) that the Blog Writer turns into a post."
         ),
         instructions="./instructions.md",
-        tools=[WebSearchTool(), IPythonInterpreter],
+        tools=[WebSearchTool(), *([IPythonInterpreter] if allow_code_execution() else [])],
         model=get_default_model(),
         model_settings=ModelSettings(
             reasoning=Reasoning(effort="medium", summary="auto") if is_openai_provider() else None,
